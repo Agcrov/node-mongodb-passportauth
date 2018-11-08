@@ -3,7 +3,7 @@ var router = express.Router();
 const passport = require('passport');
 const jwt = require('jsonwebtoken');
 const User = require('../models/user');
-const config = require('../config/database');
+const config = require('../config/config');
 
 getToken = function (headers) {
     if (headers && headers.authorization) {
@@ -25,13 +25,14 @@ router.post('/register',(req, res, next) => {
         username: req.body.username,
         password: req.body.password
     });
+    console.log(user);
     User.addUser(user, (err, user) => {
-      if (err){
-        res.json({success: false, message:'Failed to register user'});
-      } else {
-        res.json({success: true, message:'User register', user: user});
-      }
-    })
+        if (err){
+            res.json({success: false, message:'Failed to register user', error: err});
+        } else {
+            res.json({success: true, message:'User registered', user: user});
+        }
+    });
 });
 router.post('/authenticate',(req, res, next) => {
     const email = req.body.email;
@@ -58,7 +59,7 @@ router.post('/authenticate',(req, res, next) => {
                     }
                 });
             } else {
-                res.json({succses: false, message: 'Wrong password'});
+                res.json({success: false, message: 'Wrong password'});
             }
            });
        }
@@ -70,7 +71,7 @@ router.get('/profile', passport.authenticate('jwt', {session:false}), (req, res,
 });
 /* GET users listing. */
 router.get('/', function(req, res, next) {
-  res.send('respond with a resource');
+   res.json({success: false, message: 'Wrong password'});
 });
 
 module.exports = router;
