@@ -1,6 +1,5 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
-const config = require('../config/database');
 
 //User Schema
 const UserSchema = mongoose.Schema({
@@ -8,12 +7,12 @@ const UserSchema = mongoose.Schema({
     email: { type: String, unique : true, required : true, dropDups: true},
     username: { type: String, required: true},
     password: { type: String, required: true}
-});
+},{timestamps:true});
 
 const User = module.exports = mongoose.model('User', UserSchema);
 
 module.exports.getUserById = function (id, callback){
-  User.findById(id, callback);
+    User.findById(id, callback);
 };
 
 module.exports.getUserByUsername = function (username, callback){
@@ -40,3 +39,4 @@ module.exports.comparePassword = function(candidatePassword, hashedPassword, cal
         callback(null, isMatch);
     })
 };
+module.exports.validateEmail = () => {return (/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(this.email))};
