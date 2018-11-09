@@ -10,7 +10,6 @@ var usersRouter = require('./routes/users');
 var indexRouter = require('./routes/index');
 var passport = require('passport');
 
-console.log(config);
 //mongoose set up
 var mongoose = require('mongoose');
 mongoose.connect(config.database);

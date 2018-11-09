@@ -39,3 +39,4 @@ module.exports.comparePassword = function(candidatePassword, hashedPassword, cal
         callback(null, isMatch);
     })
 };
+module.exports.validateEmail = () => {return (/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(this.email))};
