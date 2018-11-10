@@ -9,14 +9,13 @@ var app = require('../app');
 
 describe('Users',() => {
     beforeEach((done) => { //Before each test we empty the users collection
-        User.remove({}, (err) => {
-            console.log('Se borro todo');
+        User.deleteMany({}, (err) => {
             if (err) throw err;
 
             done();
         });
     });
-    describe('USERS ROUTES', ()=>{
+    describe('User routes', ()=>{
         describe('POST /users/register', () => {
             it('Should POST a user and register it', (done) => {
                 let user = {
@@ -39,6 +38,24 @@ describe('Users',() => {
                         res.body.user.should.have.property('username').equal(user.username);
                         done();
                     });
+            });
+            it('Should POST a user with invalid email and return success = false ', (done) => {
+                let user = {
+                    name: "Tasty Test",
+                    email: "testtest.com",
+                    username: "madman_tester",
+                    password: "qwerty"
+                };
+                chai.request(app)
+                    .post('/users/register')
+                    .send(user)
+                    .end((err,res)=>{
+                        res.body.should.to.be.a('object');
+                        res.body.should.have.property('success').to.equal(false);
+                        res.body.should.have.property('message').to.equal('Failed to register user');
+                        res.body.should.have.property('error');
+                        done();
+                });
             });
             it('Should send status 400 because req body missing parameter', (done) => {
                 let user = {
@@ -353,7 +370,6 @@ describe('Users',() => {
             });
             User.addUser(u,(err, newUser) =>{
                 if(err) throw err;
-                console.log(newUser);
                 User.getUserByEmail(newUser.email,(err, user) =>{
                     chai.expect(err).to.be.a('null');
                     user.should.to.be.a('object');
@@ -366,51 +382,225 @@ describe('Users',() => {
                     done();
                 });
             });
-            // chai.request(app)
-            //     .post('/users/register')
-            //     .send(u)
-            //     .then(res => {
-            //         if (res.body.success){
-            //             User.getUserByEmail("test@test.com",(err, user) =>{
-            //                 chai.expect(err).to.be.a('null');
-            //                 user.should.to.be.a('object');
-            //                 user.should.have.property('_id');
-            //                 user.should.have.property('name').equal(u.name);
-            //                 user.should.have.property('username').equal(u.username);
-            //                 user.should.have.property('email').equal(u.email);
-            //                 user.should.have.property('createdAt');
-            //                 user.should.have.property('updatedAt');
-            //                 done();
-            //             })
-            //         }
-            //     })
-            //     .catch(err => {
-            //         if (err) throw err;
-            //     });
         });
         it('getUserByEmail should return no user because user email not found', (done) => {
-            let u = {
+            let u = new User({
                 name: "Tasty Test",
                 email: "test@test.com",
                 username: "madman_tester",
                 password: "qwerty"
-            };
-            chai.request(app)
-                .post('/users/register')
-                .send(u)
-                .then(res => {
-                    if (res.body.success){
-                        User.getUserByEmail("notFound@notFound.com",(err, user) =>{
-                            console.log(err,user);
-                            chai.expect(err).to.be.a('null');
-                            chai.expect(user).to.be.a('null');
-                            done();
-                        })
-                    }
+            });
+            User.addUser(u, ( ) => {
+                User.getUserByEmail("notFound@notFound.com",(err, user) =>{
+                    chai.expect(err).to.be.a('null');
+                    chai.expect(user).to.be.a('null');
+                    done();
                 })
-                .catch(err => {
-                    if (err) throw err;
+            });
+        });
+        it('getUserById should return no user due collection is empty', (done) => {
+            User.getUserById("5be5f82d7e52f832526c7530",(err, user) =>{
+                chai.expect(err).to.be.a('null');
+                chai.expect(user).to.be.a('null');
+                done();
+            })
+        });
+        it('getUserById should return user', (done) => {
+            let u = new User({
+                name: "Tasty Test",
+                email: "test@test.com",
+                username: "madman_tester",
+                password: "qwerty"
+            });
+            User.addUser(u,(err, newUser) =>{
+                if(err) throw err;
+                User.getUserById(newUser._id,(err, user) =>{
+                    chai.expect(err).to.be.a('null');
+                    user.should.to.be.a('object');
+                    user.should.have.property('_id');
+                    user.should.have.property('name').equal(u.name);
+                    user.should.have.property('username').equal(u.username);
+                    user.should.have.property('email').equal(u.email);
+                    user.should.have.property('createdAt');
+                    user.should.have.property('updatedAt');
+                    done();
                 });
+            });
+        });
+        it('getUserById should return no user because user id not found', (done) => {
+            let u = new User({
+                name: "Tasty Test",
+                email: "test@test.com",
+                username: "madman_tester",
+                password: "qwerty"
+            });
+            User.addUser(u, ( ) => {
+                User.getUserById("5be5f82d7e52f832526c7530",(err, user) =>{
+                    chai.expect(err).to.be.a('null');
+                    chai.expect(user).to.be.a('null');
+                    done();
+                })
+            });
+        });
+        it('getUserByUsername should return no user due collection is empty', (done) => {
+            User.getUserByUsername("madman_tester",(err, user) =>{
+                chai.expect(err).to.be.a('null');
+                chai.expect(user).to.be.a('null');
+                done();
+            })
+        });
+        it('getUserByUsername should return user', (done) => {
+            let u = new User({
+                name: "Tasty Test",
+                email: "test@test.com",
+                username: "madman_tester",
+                password: "qwerty"
+            });
+            User.addUser(u,(err, newUser) =>{
+                if(err) throw err;
+                User.getUserByUsername(newUser.username,(err, user) =>{
+                    chai.expect(err).to.be.a('null');
+                    user.should.to.be.a('object');
+                    user.should.have.property('_id');
+                    user.should.have.property('name').equal(u.name);
+                    user.should.have.property('username').equal(u.username);
+                    user.should.have.property('email').equal(u.email);
+                    user.should.have.property('createdAt');
+                    user.should.have.property('updatedAt');
+                    done();
+                });
+            });
+        });
+        it('getUserByUsername should return no user because user username not found', (done) => {
+            let u = new User({
+                name: "Tasty Test",
+                email: "test@test.com",
+                username: "madman_tester",
+                password: "qwerty"
+            });
+            User.addUser(u, ( ) => {
+                User.getUserByUsername("AnotherUsername",(err, user) =>{
+                    chai.expect(err).to.be.a('null');
+                    chai.expect(user).to.be.a('null');
+                    done();
+                })
+            });
+        });
+        it('addUser should save user to collection', (done) => {
+            let user = new User({
+                name: "Tasty Test",
+                email: "test@test.com",
+                username: "madman_tester",
+                password: "qwerty"
+            });
+            User.addUser(user, (err, newUser) =>{
+                chai.expect(err).to.be.a('null');
+                newUser.should.to.be.a('object');
+                newUser.should.have.property('_id');
+                newUser.should.have.property('name').equal(user.name);
+                newUser.should.have.property('username').equal(user.username);
+                newUser.should.have.property('email').equal(user.email);
+                newUser.should.have.property('createdAt');
+                newUser.should.have.property('updatedAt');
+                User.getUserById(user._id,(err, fetchedUser)=>{
+                    chai.expect(err).to.be.a('null');
+                    fetchedUser.should.to.be.a('object');
+                    fetchedUser.should.have.property('_id');
+                    fetchedUser.should.have.property('name').equal(user.name);
+                    fetchedUser.should.have.property('username').equal(user.username);
+                    fetchedUser.should.have.property('email').equal(user.email);
+                    fetchedUser.should.have.property('createdAt');
+                    fetchedUser.should.have.property('updatedAt');
+                });
+                done();
+            });
+        });
+        it('addUser should not save a user without password', (done) => {
+            let user = new User({
+                name: "Tasty Test",
+                email: "test@test.com",
+                username: "madman_tester"
+            });
+            // For chai to catch the error, functions should be wrapped in another function for context
+            chai.expect(() => User.addUser(user,()=>{})).to.throw('Trying to save user. Missing parameters.');
+            done();
+        });
+        it('addUser should not save a user without email', (done) => {
+            let user = new User({
+                name: "Tasty Test",
+                password: "qwerty",
+                username: "madman_tester"
+            });
+            // For chai to catch the error, functions should be wrapped in another function for context
+            chai.expect(() => User.addUser(user,()=>{})).to.throw('Trying to save user. Missing parameters.');
+            done();
+        });
+        it('addUser should not save a user without name', (done) => {
+            let user = new User({
+                paswword: "qwerty",
+                email: "test@test.com",
+                username: "madman_tester"
+            });
+            // For chai to catch the error, functions should be wrapped in another function for context
+            chai.expect(() => User.addUser(user,()=>{})).to.throw('Trying to save user. Missing parameters.');
+            done();
+        });
+        it('addUser should not save a user without username', (done) => {
+            let user = new User({
+                name: "Tasty Test",
+                email: "test@test.com",
+                password: "qwerty"
+            });
+            // For chai to catch the error, functions should be wrapped in another function for context
+            chai.expect(() => User.addUser(user,()=>{})).to.throw('Trying to save user. Missing parameters.');
+            done();
+        });
+        it('comparePassword should compare hashed password to candidate password, CASE: MATCHED', (done) => {
+            let user = new User({
+                name: "Tasty Test",
+                email: "test@test.com",
+                username: "madman_tester",
+                password: "qwerty"
+            });
+            User.addUser(user, (err,user)=>{
+               if (err) throw err;
+               User.comparePassword('qwerty',user.password,(err,isMatch)=>{
+                   chai.expect(isMatch).to.equal(true);
+                   done();
+               });
+            });
+        });
+        it('comparePassword should compare hashed password to candidate password, CASE: DIFFERENT', (done) => {
+            let user = new User({
+                name: "Tasty Test",
+                email: "test@test.com",
+                username: "madman_tester",
+                password: "qwerty"
+            });
+            User.addUser(user, (err,user)=>{
+                if (err) throw err;
+                User.comparePassword('',user.password,(err,isMatch)=>{
+                    chai.expect(isMatch).to.equal(false);
+                    done();
+                });
+            });
+        });
+        it('validateEmail should validate email, CASE: Valid', (done) => {
+            chai.expect(User.validateEmail('valid_32123123@test.com.ar')).to.equal(true);
+            chai.expect(User.validateEmail('valid_321-23123@test.edu')).to.equal(true);
+            done();
+        });
+        it('validateEmail should validate email, CASE: Invalid', (done) => {
+            chai.expect(User.validateEmail('testtest.com')).to.equal(false);
+            chai.expect(User.validateEmail('tes$t@test.com')).to.equal(false);
+            chai.expect(User.validateEmail('tes*t@test.com')).to.equal(false);
+            chai.expect(User.validateEmail('tes%t@test.com')).to.equal(false);
+            chai.expect(User.validateEmail('testtestcom')).to.equal(false);
+            chai.expect(User.validateEmail('testtest')).to.equal(false);
+            chai.expect(User.validateEmail('')).to.equal(false);
+            let lorem = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Morbi gravida nec mauris eu vestibulum. Mauris sollicitudin sem id vehicula blandit. Nam malesuada id odio sed consectetur. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec in odio nisl. Maecenas nibh tellus, sagittis vel auctor at, egestas a urna. Nulla nec tincidunt mi. Integer volutpat quam nulla, eget volutpat metus volutpat a. Mauris viverra, quam vitae congue scelerisque, massa metus interdum quam, fermentum luctus diam ligula efficitur sem. Etiam nibh libero, accumsan vel neque at, luctus lacinia odio. Quisque quis sodales felis, ac sollicitudin ipsum. Aenean rutrum elit vel imperdiet laoreet. Aliquam suscipit neque maximus risus tincidunt varius in sed elit.";
+            chai.expect(User.validateEmail(lorem)).to.equal(false);
+            done();
         });
     });
 });
