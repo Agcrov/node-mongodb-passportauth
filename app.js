@@ -19,8 +19,16 @@ mongoose.connect(configDB.database);
 mongoose.connection.on('connected', () => {
   console.log('Connected to database ' + configDB.database);
 });
-mongoose.connection.on('error', (error) => {
-  console.error(error);
+// Retry connection
+const connectWithRetry = () => {
+    console.log('MongoDB connection with retry');
+    return mongoose.connect(config.database);
+};
+// Exit application on error
+mongoose.connection.on('error', err => {
+    console.log(`MongoDB connection error: ${err}`);
+    setTimeout(connectWithRetry, 5000);
+    // process.exit(-1)
 });
 
 var app = express();
